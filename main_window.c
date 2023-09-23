@@ -1,5 +1,5 @@
 int paint;
-int mode;
+int mode,prev_mode;
 int if_selected(unsigned long off)
 {
 	unsigned long off1,off2;
@@ -162,28 +162,36 @@ int WndProc(void *hwnd,unsigned int Message,unsigned int wParam,unsigned int lPa
 				{
 					cmd[0]=0;
 					mode=3;
+					prev_mode=0;
 					paint_all();
 				}
 				else if(wParam=='P')
 				{
-					int x;
-					x=0;
-					while(x<clipboard_size)
+					char *clipboard;
+					int x,clipboard_size;
+					clipboard=get_clipboard();
+					if(clipboard!=NULL)
 					{
-						if(current_pos_end)
+						clipboard_size=strlen(clipboard);
+						x=0;
+						while(x<clipboard_size)
 						{
-							op_push(clipboard[x],current_pos.off+1);
-							addc_end(clipboard[x]);
-							current_pos_end=0;
-							cursor_right();
+							if(current_pos_end)
+							{
+								op_push(clipboard[x],current_pos.off+1);
+								addc_end(clipboard[x]);
+								current_pos_end=0;
+								cursor_right();
+							}
+							else
+							{
+								op_push(clipboard[x],current_pos.off);
+								addc(clipboard[x]);
+							}
+							current_x_refine();
+							++x;
 						}
-						else
-						{
-							op_push(clipboard[x],current_pos.off);
-							addc(clipboard[x]);
-						}
-						current_x_refine();
-						++x;
+						free(clipboard);
 					}
 					paint_all();
 				}
@@ -241,6 +249,29 @@ int WndProc(void *hwnd,unsigned int Message,unsigned int wParam,unsigned int lPa
 					mode=0;
 					paint_all();
 				}
+				else if(wParam=='>')
+				{
+					cmd[0]=0;
+					mode=3;
+					prev_mode=2;
+					paint_all();
+				}
+				else if(wParam=='f')
+				{
+					if(search_buf[0])
+					{
+						search_forward(search_buf);
+						paint_all();
+					}
+				}
+				else if(wParam=='F')
+				{
+					if(search_buf[0])
+					{
+						search_backward(search_buf);
+						paint_all();
+					}
+				}
 			}
 			else if(mode==3)
 			{
@@ -248,7 +279,7 @@ int WndProc(void *hwnd,unsigned int Message,unsigned int wParam,unsigned int lPa
 				{
 					issue_command();
 					current_x_refine();
-					mode=0;
+					mode=prev_mode;
 					cmd[0]=0;
 					paint_all();
 				}

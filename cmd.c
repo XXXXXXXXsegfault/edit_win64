@@ -1,12 +1,11 @@
 
 char cmd[48];
-char *clipboard;
-long clipboard_size;
 void copy_selected_str(void)
 {
 	unsigned long int end_off;
 	struct file_pos pos;
-	int c;
+	int c,clipboard_size;;
+	char *clipboard;
 	if(select_pos.off<current_pos.off)
 	{
 		end_off=current_pos.off;
@@ -17,9 +16,8 @@ void copy_selected_str(void)
 		end_off=select_pos.off;
 		memcpy(&pos,&current_pos,sizeof(pos));
 	}
-	free(clipboard);
 	clipboard_size=0;
-	clipboard=malloc(end_off-pos.off);
+	clipboard=malloc(end_off-pos.off+1);
 	if(clipboard==NULL)
 	{
 		return;
@@ -38,6 +36,9 @@ void copy_selected_str(void)
 			break;
 		}
 	}
+	clipboard[clipboard_size]=0;
+	set_clipboard(clipboard);
+	free(clipboard);
 }
 void del_selected_str(void)
 {

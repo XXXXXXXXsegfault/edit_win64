@@ -65,20 +65,24 @@ int file_load(void)
 	void *fp;
 	unsigned char buf[MAX_BUFLEN];
 	int n;
+	int has_nl;
+	int total_size;
 	struct file *node;
-	fp=fopen(file_name,"rb");
+	fp=fopen(file_name,"r");
 	if(fp==NULL)
 	{
 		return 1;
 	}
-	while(n=fread(buf,1,MAX_BUFLEN,fp))
+	has_nl=1; // we do not need to add NL if the file is empty
+	total_size=0;
+	while(n=fread(buf,1,MAX_BUFLEN-1,fp))
 	{
 		node=malloc(sizeof(*node));
 		if(node==NULL)
 		{
 			return 1;
 		}
-		node->buf=malloc(n);
+		node->buf=malloc(n+1);
 		if(node->buf==NULL)
 		{
 			return 1;
@@ -86,8 +90,24 @@ int file_load(void)
 		memcpy(node->buf,buf,n);
 		node->buflen=n;
 		file_block_insert(file_end,node);
+		has_nl=0;
+		if(buf[n-1]=='\n')
+		{
+			has_nl=1;
+		}
+		total_size+=n;
+		if(total_size>0x4000000)
+		{
+			fclose(fp);
+			return 2;
+		}
 	}
 	fclose(fp);
+	if(has_nl==0)
+	{
+		file_end->buf[file_end->buflen]='\n';
+		++file_end->buflen;
+	}
 	current_pos.block=file_head;
 	view_pos.block=file_head;
 	if(file_head==NULL)

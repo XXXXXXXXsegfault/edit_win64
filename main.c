@@ -12,6 +12,83 @@ unsigned int *pbuf;
 char *file_name;
 int current_x;
 void *dc,*memdc,*bmp;
+void *hwnd_main;
+
+char *get_clipboard(void)
+{
+	void *clipboard;
+	char *clipboard_data,*ret;
+	int i;
+	char c;
+	if(!OpenClipboard(hwnd_main))
+	{
+		return NULL;
+	}
+	clipboard=GetClipboardData(1);
+	if(clipboard==NULL)
+	{
+		CloseClipboard();
+		return NULL;
+	}
+	clipboard_data=GlobalLock(clipboard);
+	ret=malloc(strlen(clipboard_data+1));
+	if(ret==NULL)
+	{
+		GlobalUnlock(clipboard);
+		CloseClipboard();
+		return NULL;
+	}
+	i=0;
+	while(c=*clipboard_data)
+	{
+		if(c>=32&&c<=126||c=='\n'||c=='\t')
+		{
+			ret[i]=c;
+			++i;
+		}
+		++clipboard_data;
+	}
+	ret[i]=0;
+	GlobalUnlock(clipboard);
+	CloseClipboard();
+	return ret;
+}
+void set_clipboard(char *str)
+{
+	char *hm,*new_str;
+	char c;
+	if(!OpenClipboard(hwnd_main))
+	{
+		return;
+	}
+	EmptyClipboard();
+	hm=GlobalAlloc(0x2,strlen(str)*2+2);
+	if(hm==NULL)
+	{
+		CloseClipboard();
+		return;
+	}
+	new_str=GlobalLock(hm);
+	while(c=*str)
+	{
+		if(c>=32&&c<=126||c=='\t')
+		{
+			*new_str=c;
+			++new_str;
+		}
+		else if(c=='\n')
+		{
+			new_str[0]='\r';
+			new_str[1]='\n';
+			new_str+=2;
+		}
+		++str;
+	}
+	*new_str=0;
+	GlobalUnlock(hm);
+	SetClipboardData(1,hm);
+	CloseClipboard();
+}
 
 #include "file.c"
 #include "undo.c"
@@ -19,6 +96,7 @@ void *dc,*memdc,*bmp;
 #include "main_window.c"
 int main(int argc,char **argv,void *hInstance)
 {
+	int ret;
 	if(argc<2)
 	{
 		MessageBoxA(NULL,"You need to drag a file onto \"edit.exe\".","Message",0);
@@ -30,9 +108,16 @@ int main(int argc,char **argv,void *hInstance)
 	{
 		return 1;
 	}
-	if(file_load())
+	if(ret=file_load())
 	{
-		MessageBoxA(NULL,"\"edit.exe\": Cannot open file.","Message",0);
+		if(ret==2)
+		{
+			MessageBoxA(NULL,"\"edit.exe\": The file is too large.","Message",0);
+		}
+		else
+		{
+			MessageBoxA(NULL,"\"edit.exe\": Cannot open file.","Message",0);
+		}
 		return 1;
 	}
 	static struct wndclassex wc;
@@ -58,6 +143,7 @@ int main(int argc,char **argv,void *hInstance)
 	memdc=CreateCompatibleDC(dc);
 	bmp=CreateCompatibleBitmap(dc,WINW,WINH);
 	SelectObject(memdc,bmp);
+	hwnd_main=hwnd;
 	while(GetMessageA(&msg,NULL,0,0))
 	{
 		TranslateMessage(&msg);
