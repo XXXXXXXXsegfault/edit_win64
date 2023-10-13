@@ -4,10 +4,7 @@
 #include "iformat.c"
 #include "rect.c"
 #include "font.c"
-#define CW 100
-#define CH 35
-#define WINW (CW*8)
-#define WINH (CH*16+16)
+int CW,CH,WINW,WINH;
 unsigned int *pbuf;
 char *file_name;
 int current_x;
@@ -97,12 +94,30 @@ void set_clipboard(char *str)
 int main(int argc,char **argv,void *hInstance)
 {
 	int ret;
+	char title[280];
+	int i;
 	if(argc<2)
 	{
 		MessageBoxA(NULL,"You need to drag a file onto \"edit.exe\".","Message",0);
 		return 1;
 	}
+	
+	CW=100;
+	CH=35;
+	WINW=CW*8;
+	WINH=CH*16+16;
 	file_name=argv[1];
+	strcpy(title,"Edit - ");
+	i=strlen(file_name);
+	while(i&&file_name[i-1]!='\\'&&file_name[i-1]!='/')
+	{
+		--i;
+	}
+	if(strlen(file_name+i)>255)
+	{
+		MessageBoxA(NULL,"\"edit.exe\": Cannot open file.","Message",0);
+	}
+	strcat(title,file_name+i);
 	pbuf=malloc(WINW*WINH*4);
 	if(pbuf==NULL)
 	{
@@ -134,7 +149,7 @@ int main(int argc,char **argv,void *hInstance)
 	{
 		return 0;
 	}
-	hwnd=CreateWindowExA(WS_EX_WINDOWEDGE,"EDIT","Edit",WS_VISIBLE|WS_SYSMENU|WS_CAPTION,0,0,WINW+6,WINH+29,NULL,NULL,hInstance,NULL);
+	hwnd=CreateWindowExA(WS_EX_WINDOWEDGE,"EDIT",title,WS_VISIBLE|WS_SYSMENU|WS_CAPTION|WS_THICKFRAME,0,0,WINW+16,WINH+39,NULL,NULL,hInstance,NULL);
 	if(hwnd==NULL)
 	{
 		return 0;

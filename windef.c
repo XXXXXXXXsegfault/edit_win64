@@ -41,7 +41,9 @@ struct paintstruct
 #define WS_VISIBLE 0x10000000
 #define WS_SYSMENU 0x80000
 #define WS_CAPTION 0xc00000
+#define WS_THICKFRAME 0x40000
 #define WM_DESTROY 2
+#define WM_ERASEBKGND 20
 #define WM_PAINT 15
 #define WM_LBUTTONDOWN 513
 #define WM_LBUTTONUP 514

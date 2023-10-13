@@ -26,72 +26,74 @@ void p_text(void)
 	struct file_pos pos;
 	int x,y,x1,y1;
 	int c;
-	memcpy(&pos,&view_pos,sizeof(pos));
-	y=0;
-	x=0;
-	while(y<CH)
+	if(CW>0&&CH>0)
 	{
-		c=file_getc(&pos);
-		if(c==-1)
+		memcpy(&pos,&view_pos,sizeof(pos));
+		y=0;
+		x=0;
+		while(y<CH)
 		{
-			break;
+			c=file_getc(&pos);
+			if(c==-1)
+			{
+				break;
+			}
+			x1=(x-current_x)*8;
+			y1=y*16;
+			if(mode==2&&if_selected(pos.off))
+			{
+				rect(pbuf,WINW,WINH,x1,y1,8,16,0x0060ff);
+			}
+			if(pos.off==current_pos.off&&!current_pos_end)
+			{
+				rect(pbuf,WINW,WINH,x1,y1,8,14,0xffa000);
+			}
+			if(c=='\t')
+			{
+				if(x>=current_x&&x<current_x+CW)
+				{
+					rect(pbuf,WINW,WINH,x1,y1,7,16,0xc0c0c0);
+				}
+				++x;
+			}
+			else if(c=='\n')
+			{
+				x=0;
+				++y;
+			}
+			else if(c<32||c>126)
+			{
+				if(x>=current_x&&x<current_x+CW)
+				{
+					p_char('\?',x1,y1,0x40ff,pbuf,WINW,WINH);
+				}
+				++x;
+			}
+			else
+			{
+				if(x>=current_x&&x<current_x+CW)
+				{
+					p_char(c,x1,y1,0x0,pbuf,WINW,WINH);
+				}
+				++x;
+			}
+			if(pos.off==current_pos.off&&!current_pos_end)
+			{
+				rect(pbuf,WINW,WINH,x1,y1+14,8,2,0x4040);
+			}
+			if(!file_pos_move_right(&pos))
+			{
+				break;
+			}
 		}
 		x1=(x-current_x)*8;
 		y1=y*16;
-		if(mode==2&&if_selected(pos.off))
-		{
-			rect(pbuf,WINW,WINH,x1,y1,8,16,0x0060ff);
-		}
-		if(pos.off==current_pos.off&&!current_pos_end)
+		if(pos.off==current_pos.off&&current_pos_end)
 		{
 			rect(pbuf,WINW,WINH,x1,y1,8,14,0xffa000);
-		}
-		if(c=='\t')
-		{
-			if(x>=current_x&&x<current_x+CW)
-			{
-				rect(pbuf,WINW,WINH,x1,y1,7,16,0xc0c0c0);
-			}
-			++x;
-		}
-		else if(c=='\n')
-		{
-			x=0;
-			++y;
-		}
-		else if(c<32||c>126)
-		{
-			if(x>=current_x&&x<current_x+CW)
-			{
-				p_char('\?',x1,y1,0x40ff,pbuf,WINW,WINH);
-			}
-			++x;
-		}
-		else
-		{
-			if(x>=current_x&&x<current_x+CW)
-			{
-				p_char(c,x1,y1,0x0,pbuf,WINW,WINH);
-			}
-			++x;
-		}
-		if(pos.off==current_pos.off&&!current_pos_end)
-		{
 			rect(pbuf,WINW,WINH,x1,y1+14,8,2,0x4040);
 		}
-		if(!file_pos_move_right(&pos))
-		{
-			break;
-		}
 	}
-	x1=(x-current_x)*8;
-	y1=y*16;
-	if(pos.off==current_pos.off&&current_pos_end)
-	{
-		rect(pbuf,WINW,WINH,x1,y1,8,14,0xffa000);
-		rect(pbuf,WINW,WINH,x1,y1+14,8,2,0x4040);
-	}
-
 	rect(pbuf,WINW,WINH,0,WINH-16,WINW,16,0xb0b0b0);
 	if(mode==1)
 	{
@@ -109,13 +111,17 @@ void p_text(void)
 }
 void paint_all(void)
 {
+	if(pbuf==NULL)
+	{
+		return;
+	}
 	rect(pbuf,WINW,WINH,0,0,WINW,WINH,0xe0e0e0);
 	p_text();
 	SetBitmapBits(bmp,WINW*WINH*4,pbuf);
 	BitBlt(dc,0,0,WINW,WINH,memdc,0,0,SRCCOPY);
 }
 
-int _WndProc(void *hwnd,unsigned int Message,unsigned int wParam,unsigned int lParam); // NOTE: SCC uses a different calling convention
+int _WndProc(void *); // NOTE: SCC uses a different calling convention
 asm "@_WndProc"
 asm "push %r9"
 asm "push %r8"
@@ -124,18 +130,43 @@ asm "push %rcx"
 asm "call @WndProc"
 asm "add $32,%rsp"
 asm "ret"
-int WndProc(void *hwnd,unsigned int Message,unsigned int wParam,unsigned int lParam)
+int WndProc(void *hwnd,unsigned int Message,unsigned long wParam,unsigned long lParam)
 {
 	if(Message==WM_DESTROY)
 	{
 		exit(0);
 	}
-	if(Message==WM_PAINT)
+	if(Message==WM_ERASEBKGND)
+	{
+		int rect[4];
+		dc=GetDC(hwnd);
+		DeleteObject(bmp);
+		bmp=NULL;
+		DeleteDC(memdc);
+		memdc=NULL;
+		free(pbuf);
+		memset(rect,0,sizeof(rect));
+		GetWindowRect(hwnd,rect);
+		WINW=rect[2]-rect[0]-16;
+		WINH=rect[3]-rect[1]-39;
+		CW=WINW/8;
+		CH=(WINH-16)/16;
+		pbuf=malloc(WINW*WINH*4);
+		if(pbuf!=NULL)
+		{
+			memdc=CreateCompatibleDC(dc);
+			bmp=CreateCompatibleBitmap(dc,WINW,WINH);
+			SelectObject(memdc,bmp);
+			paint_all();
+		}
+		return 0;
+	}
+	else if(Message==WM_PAINT)
 	{
 		struct paintstruct ps;
 		BeginPaint(hwnd,&ps);
-		EndPaint(hwnd,&ps);
 		paint_all();
+		EndPaint(hwnd,&ps);
 	}
 	else if(Message==WM_CHAR)
 	{
