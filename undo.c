@@ -153,6 +153,10 @@ void c_insert(char c)
 		op_push(c,current_pos.off);
 		addc(c);
 	}
+	if(c=='\n')
+	{
+		move_next_line(&view_pos);
+	}
 	current_x_refine();
 }
 void c_delete(void)
@@ -166,6 +170,10 @@ void c_delete(void)
 		if(c1!=-1)
 		{
 			op_push(c1|0x100,current_pos.off);
+			if(c1=='\n')
+			{
+				move_prev_line(&view_pos);
+			}
 		}
 		if(!cursor_left())
 		{
@@ -183,6 +191,10 @@ void c_delete(void)
 		{
 			c1=file_getc(&pos);
 			op_push(c1|0x100,pos.off);
+			if(c1=='\n')
+			{
+				move_prev_line(&view_pos);
+			}
 		}
 		delc();
 	}

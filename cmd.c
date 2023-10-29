@@ -64,14 +64,7 @@ void del_selected_str(void)
 	}
 	while(size)
 	{
-		memcpy(&pos,&current_pos,sizeof(pos));
-		if(file_pos_move_left(&pos))
-		{
-			c1=file_getc(&pos);
-			op_push(c1|0x100,pos.off);
-		}
-		delc();
-		current_x_refine();
+		c_delete();
 		--size;
 	}
 }
