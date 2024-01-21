@@ -148,7 +148,7 @@ int WndProc(void *hwnd,unsigned int Message,unsigned long wParam,unsigned long l
 		memset(rect,0,sizeof(rect));
 		GetWindowRect(hwnd,rect);
 		WINW=rect[2]-rect[0]-16;
-		WINH=rect[3]-rect[1]-39;
+		WINH=rect[3]-rect[1]-46;
 		CW=WINW/8;
 		CH=(WINH-16)/16;
 		pbuf=malloc(WINW*WINH*4);

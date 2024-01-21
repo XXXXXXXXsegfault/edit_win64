@@ -96,6 +96,7 @@ int main(int argc,char **argv,void *hInstance)
 	int ret;
 	char title[280];
 	int i;
+	SetProcessDPIAware();
 	if(argc<2)
 	{
 		MessageBoxA(NULL,"You need to drag a file onto \"edit.exe\".","Message",0);
@@ -149,7 +150,7 @@ int main(int argc,char **argv,void *hInstance)
 	{
 		return 0;
 	}
-	hwnd=CreateWindowExA(WS_EX_WINDOWEDGE,"EDIT",title,WS_VISIBLE|WS_SYSMENU|WS_CAPTION|WS_THICKFRAME,0,0,WINW+16,WINH+39,NULL,NULL,hInstance,NULL);
+	hwnd=CreateWindowExA(WS_EX_WINDOWEDGE,"EDIT",title,WS_VISIBLE|WS_SYSMENU|WS_CAPTION|WS_THICKFRAME,0,0,WINW+16,WINH+46,NULL,NULL,hInstance,NULL);
 	if(hwnd==NULL)
 	{
 		return 0;

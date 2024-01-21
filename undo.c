@@ -153,10 +153,12 @@ void c_insert(char c)
 		op_push(c,current_pos.off);
 		addc(c);
 	}
+/*
 	if(c=='\n')
 	{
 		move_next_line(&view_pos);
 	}
+*/
 	current_x_refine();
 }
 void c_delete(void)
