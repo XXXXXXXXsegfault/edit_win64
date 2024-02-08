@@ -45,7 +45,7 @@ previously searched using the f or F command in command mode.
 C -- Copy the selected string
 D -- Cut the selected string
 NOTE: These two commands also switch you back to normal mode.
->, f, F -- Same as Normal Mode
+>, f, F -- Same as in Normal Mode
 
 *Commands in Command Mode*
 
